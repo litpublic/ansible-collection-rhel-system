@@ -1,0 +1,9 @@
+- name: Harden sshd configuration
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^{{ item.key }}\s+"
+    line: "{{ item.key }} {{ item.value }}"
+    create: yes
+    backup: yes
+  loop: "{{ sshd_hardening | dict2items }}"
+  notify: Restart sshd

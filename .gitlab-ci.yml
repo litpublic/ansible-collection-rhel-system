@@ -1,0 +1,196 @@
+stages:
+  - lint
+  - test
+  - release
+  - version
+  - build
+  - publish
+  - mirror
+
+default:
+  cache:
+    key: ${CI_PROJECT_NAME}-pip
+    paths:
+      - .cache/pip
+
+variables:
+  PIP_CACHE_DIR: ".cache/pip"
+  PY_COLORS: "1"
+  ANSIBLE_FORCE_COLOR: "1"
+
+.rules_all_refs:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH'
+
+lint:
+  stage: lint
+  extends: .rules_all_refs
+  image: python:3.11
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install ansible-core==2.15.9 ansible-lint==24.6.0 yamllint==1.35.1
+    - export ANSIBLE_COLLECTIONS_PATHS="$CI_PROJECT_DIR/.."
+  script:
+    - ansible-lint
+    - yamllint -c .yamllint.yaml .
+
+molecule:
+  stage: test
+  extends: .rules_all_refs
+  image: quay.io/ansible/molecule:latest
+  services:
+    - name: docker:27-dind
+      command: ["--mtu=1460"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - pip3 install --upgrade pip
+    - pip3 install "ansible-core==2.15.9" "molecule[docker]==24.6.0"
+  script:
+    - export ANSIBLE_COLLECTIONS_PATHS="$CI_PROJECT_DIR/.."
+    - molecule test --all
+
+semantic_release:
+  stage: release
+  image: "${REGISTRY_FQDN}/${REGISTRY_GROUP}/gitlab-runner-ubi-9-node-release:latest"
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - git status
+    - npx semantic-release
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+semantic_version_check:
+  stage: version
+  image: python:3.11
+  script:
+    - python -m pip install --upgrade pip
+    - pip install pyyaml
+    - |
+      python <<'PY'
+      import os
+      import re
+      import sys
+      from pathlib import Path
+      import yaml
+
+      tag = os.environ.get("CI_COMMIT_TAG", "")
+      if not tag:
+          print("No tag present; skipping version verification.")
+          sys.exit(0)
+
+      if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+          print(f"Tag {tag!r} is not SemVer (vX.Y.Z).")
+          sys.exit(1)
+
+      with open("galaxy.yml", "r", encoding="utf-8") as fh:
+          data = yaml.safe_load(fh)
+
+      version = str(data.get("version", "")).strip()
+      if not version:
+          print("No version found in galaxy.yml")
+          sys.exit(1)
+
+      expected_tag = f"v{version}"
+      if tag != expected_tag:
+          print(f"Tag {tag} does not match galaxy.yml version {version}. Expected {expected_tag}.")
+          sys.exit(1)
+
+      version_file = Path("VERSION")
+      if not version_file.exists():
+          print("VERSION file missing")
+          sys.exit(1)
+
+      file_version = version_file.read_text(encoding="utf-8").strip()
+      if file_version != version:
+          print(f"VERSION file contains {file_version!r}, expected {version!r}.")
+          sys.exit(1)
+
+      print(f"Tag {tag} matches galaxy.yml version {version} and VERSION file.")
+      PY
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+build_collection:
+  stage: build
+  image: python:3.11
+  needs:
+    - lint
+    - semantic_version_check
+  script:
+    - python -m pip install --upgrade pip
+    - pip install ansible-core==2.15.9
+    - export ANSIBLE_COLLECTIONS_PATHS="$CI_PROJECT_DIR/.."
+    - ansible-galaxy collection build --force
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - "lit-rhel_system-*.tar.gz"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - when: never
+
+publish_galaxy:
+  stage: publish
+  image: python:3.11
+  needs:
+    - build_collection
+  script:
+    - python -m pip install --upgrade pip
+    - pip install ansible-core==2.15.9
+    - test -n "$GALAXY_TOKEN"
+    - export ANSIBLE_COLLECTIONS_PATHS="$CI_PROJECT_DIR/.."
+    - ansible-galaxy collection publish lit-rhel_system-*.tar.gz --token "$GALAXY_TOKEN"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - when: never
+  environment:
+    name: production
+
+publish_automation_hub:
+  stage: publish
+  image: curlimages/curl:8.10.1
+  needs:
+    - build_collection
+  script:
+    - |
+      set -euo pipefail
+      TGZ="$(ls *.tar.gz)"
+      echo "Uploading $TGZ to Red Hat Partner Connect…"
+
+      if [ -z "${REDHAT_PARTNER_TOKEN:-}" ]; then
+        echo "REDHAT_PARTNER_TOKEN not set; skipping Automation Hub publish."
+        exit 0
+      fi
+
+      curl -sS -f -X POST \
+        -H "X-API-Key: $REDHAT_PARTNER_TOKEN" \
+        -F "file=@${TGZ}" \
+        https://connect.redhat.com/api/ansible/collection/upload
+
+      echo "Upload request submitted to Red Hat Partner Connect."
+      echo "Certification happens on Red Hat side. Monitor status in the Partner portal."
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+mirror_github:
+  stage: mirror
+  image: alpine/git:2.45.2
+  script:
+    - test -n "$GITHUB_TOKEN"
+    - test -n "$GITHUB_MIRROR_URL"
+    - git remote add github "$GITHUB_MIRROR_URL"
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        git push github "refs/tags/${CI_COMMIT_TAG}:refs/tags/${CI_COMMIT_TAG}"
+      else
+        git push github "HEAD:${CI_COMMIT_REF_NAME}"
+      fi
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

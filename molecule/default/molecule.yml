@@ -1,0 +1,26 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: rhel-system-instance
+    image: quay.io/ansible/ubuntu-systemd:20.04
+    pre_build_image: true
+    privileged: true
+    command: /sbin/init
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_COLLECTIONS_PATHS: "${MOLECULE_PROJECT_DIRECTORY}/../../.."
+  config_options:
+    defaults:
+      callbacks_enabled: profile_tasks
+  playbooks:
+    converge: converge.yml
+
+verifier:
+  name: ansible

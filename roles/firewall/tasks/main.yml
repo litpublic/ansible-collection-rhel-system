@@ -1,3 +1,4 @@
+---
 - name: Ensure firewalld is installed
   ansible.builtin.package:
     name: firewalld

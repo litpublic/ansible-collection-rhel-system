@@ -1,3 +1,4 @@
+---
 sshd_hardening:
   PermitRootLogin: "no"
   PasswordAuthentication: "no"

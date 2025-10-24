@@ -1,3 +1,4 @@
+---
 packages_baseline:
   - vim
   - curl

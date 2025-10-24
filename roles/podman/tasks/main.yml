@@ -1,3 +1,4 @@
+---
 - name: Install podman toolchain
   ansible.builtin.package:
     name: "{{ packages }}"

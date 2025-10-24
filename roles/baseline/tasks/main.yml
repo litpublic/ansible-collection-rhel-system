@@ -1,3 +1,4 @@
+---
 - name: Ensure baseline packages are present
   ansible.builtin.package:
     name: "{{ packages_baseline }}"

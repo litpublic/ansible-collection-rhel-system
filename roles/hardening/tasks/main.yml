@@ -1,3 +1,4 @@
+---
 - name: Harden sshd configuration
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config

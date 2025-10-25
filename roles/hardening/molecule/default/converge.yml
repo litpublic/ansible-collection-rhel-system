@@ -1,6 +1,7 @@
+---
 - name: Converge hardening
   hosts: all
   gather_facts: false
   connection: local
   roles:
-    - role: hardening
+    - role: lit.rhel_system.hardening

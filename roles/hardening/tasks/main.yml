@@ -2,7 +2,7 @@
 - name: Harden sshd configuration
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    regexp: "^{{ item.key }}\s+"
+    regexp: "^{{ item.key }}\\s+"
     line: "{{ item.key }} {{ item.value }}"
     create: yes
     backup: yes

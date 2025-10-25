@@ -12,6 +12,8 @@ Prefix-free role names:
 `firewalld_manage_service` can be set to `false` (default `true`) when running in environments where the firewalld
 service should not be managed directly (e.g., Molecule docker driver).
 
+Community note: contributors and users are expected to follow the [Ansible Community Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## CI/CD
 
 - Pre-commit (`.pre-commit-config.yaml`) runs `ansible-lint` and `yamllint` locally. Install with `pip install pre-commit && pre-commit install`.

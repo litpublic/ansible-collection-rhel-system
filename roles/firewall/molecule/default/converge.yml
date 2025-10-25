@@ -1,6 +1,7 @@
+---
 - name: Converge firewall
   hosts: all
   gather_facts: false
   connection: local
   roles:
-    - role: firewall
+    - role: lit.rhel_system.firewall

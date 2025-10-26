@@ -14,9 +14,10 @@ DOCKER_BUILDKIT=1 docker run --rm \
   "${IMAGE_NAME}" bash -c '
     set -euo pipefail
     cd /workspace
-    mkdir -p /tmp/ansible_collections/lit
-    ln -sfn /workspace /tmp/ansible_collections/lit/rhel_system
+    mkdir -p /tmp/ansible_collections/ansible_collections/litpublic
+    ln -sfn /workspace /tmp/ansible_collections/ansible_collections/litpublic/rhel_system
     export ANSIBLE_COLLECTIONS_PATH="/tmp/ansible_collections:/workspace/collections:/root/.ansible/collections:/usr/share/ansible/collections"
+    export ANSIBLE_ROLES_PATH="/workspace/roles:/root/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles"
     unset ANSIBLE_COLLECTIONS_PATHS
     if [ -d .git ]; then
       pre-commit run --all-files

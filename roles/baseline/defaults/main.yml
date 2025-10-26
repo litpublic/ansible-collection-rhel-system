@@ -3,4 +3,5 @@ packages_baseline:
   - vim
   - curl
   - bash-completion
-timezone: UTC
+  - util-linux-extra
+timezone: Etc/UTC

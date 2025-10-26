@@ -1,18 +1,15 @@
 ---
 - name: Converge
   hosts: all
-  gather_facts: false
-  become: true
+  gather_facts: true
   tasks:
     - name: Apply baseline role
       ansible.builtin.include_role:
-        name: lit.rhel_system.baseline
-      vars:
-        packages_baseline: []
+        name: litpublic.rhel_system.baseline
 
     - name: Apply firewall role without service management
       ansible.builtin.include_role:
-        name: lit.rhel_system.firewall
+        name: litpublic.rhel_system.firewall
       vars:
         firewalld_manage_service: false
         services_enable: []
@@ -20,10 +17,10 @@
 
     - name: Apply hardening role
       ansible.builtin.include_role:
-        name: lit.rhel_system.hardening
+        name: litpublic.rhel_system.hardening
 
     - name: Apply podman role with no package install
       ansible.builtin.include_role:
-        name: lit.rhel_system.podman
+        name: litpublic.rhel_system.podman
       vars:
         packages: []

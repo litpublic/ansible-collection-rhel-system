@@ -30,7 +30,8 @@ molecule/*/logs/
 molecule/*/instances.yml
 
 # Collection build output
-lit-rhel_system-*.tar.gz
+lit-ocp_platform-*.tar.gz
+.ansible/
 
 # Editor metadata
 .idea/

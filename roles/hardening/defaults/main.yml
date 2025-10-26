@@ -1,4 +1,5 @@
 ---
+hardening_sshd_service_name: sshd
 sshd_hardening:
   PermitRootLogin: "no"
   PasswordAuthentication: "no"

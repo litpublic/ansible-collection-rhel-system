@@ -1,10 +1,28 @@
 ---
+- name: Adjust sshd service name for Debian-based systems
+  ansible.builtin.set_fact:
+    hardening_sshd_service_name: ssh
+  when:
+    - hardening_sshd_service_name == 'sshd'
+    - ansible_facts.os_family == 'Debian'
+
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Determine if sshd service is present
+  ansible.builtin.set_fact:
+    hardening_restart_sshd: >-
+      {{ (ansible_facts.services | default({})).get(hardening_sshd_service_name + '.service') is not none }}
+
 - name: Harden sshd configuration
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "^{{ item.key }}\\s+"
     line: "{{ item.key }} {{ item.value }}"
-    create: yes
-    backup: yes
+    create: true
+    backup: true
+    owner: root
+    group: root
+    mode: "0644"
   loop: "{{ sshd_hardening | dict2items }}"
   notify: Restart sshd

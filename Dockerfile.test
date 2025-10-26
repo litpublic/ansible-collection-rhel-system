@@ -14,8 +14,21 @@ RUN apt-get update \
         libffi-dev \
         python3-dev \
         pkg-config \
-        docker.io \
+        curl \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+ARG DOCKER_CLI_VERSION=27.2.0
+RUN set -eux; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) cli_arch="x86_64" ;; \
+      arm64) cli_arch="aarch64" ;; \
+      *) echo "Unsupported architecture: ${arch}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${cli_arch}/docker-${DOCKER_CLI_VERSION}.tgz" \
+      | tar -xz -C /usr/local/bin --strip-components=1 docker/docker; \
+    chmod +x /usr/local/bin/docker
 
 RUN python -m pip install --upgrade pip \
     && pip install \
@@ -32,7 +45,7 @@ RUN ansible-galaxy collection install -p /usr/share/ansible/collections \
         ansible.posix \
         community.docker
 
-ENV ANSIBLE_COLLECTIONS_PATHS="/workspace/collections:/usr/share/ansible/collections"
+ENV ANSIBLE_COLLECTIONS_PATH="/workspace/collections:/usr/share/ansible/collections"
 
 WORKDIR /workspace
 

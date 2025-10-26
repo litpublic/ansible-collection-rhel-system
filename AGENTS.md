@@ -22,7 +22,10 @@ pre-commit install
 pre-commit run --all-files
 # must pass ansible-lint locally before pushing
 ansible-lint
+# Or run everything inside the curated container image
+./scripts/test-container.sh
 ```
+After **every change**, rerun `./scripts/test-container.sh` and fix any issues it reports.
 Configured in `.pre-commit-config.yaml`:
 - **ansible-lint** (with `ansible` dependency)  
 - **yamllint** (line‑length ≤ 120)
@@ -60,6 +63,7 @@ Configured in `.pre-commit-config.yaml`:
 - ✅ CI blocks merges if lint/tests fail.  
 - ✅ Conventional Commits merged to `main` trigger Semantic Release → tag `vX.Y.Z` + metadata sync.  
 - ✅ Tagged pipeline builds, publishes to Galaxy **and** uploads to Red Hat Partner Connect for certification, then mirrors `main` + tags to GitHub (read‑only).
+- ✅ Containerised workflow (`./scripts/test-container.sh`) passes before pushing changes.
 
 ---
 

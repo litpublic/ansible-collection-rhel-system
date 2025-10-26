@@ -24,6 +24,7 @@ Community note: contributors and users are expected to follow the [Ansible Commu
 - Tag releases as `vX.Y.Z` to build and publish to Ansible Galaxy automatically (requires protected `GALAXY_TOKEN`).
 - Optional Automation Hub publishing runs when `REDHAT_PARTNER_TOKEN` is supplied.
 - A `mirror_github` job pushes `main` and tags to the GitHub read-only mirror (`GITHUB_TOKEN`, `GITHUB_MIRROR_URL`).
+- Local parity: run `./scripts/test-container.sh` to execute pre-commit, ansible-lint, and Molecule inside the curated container image.
 
 Required CI variables (protected + masked):
 

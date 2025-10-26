@@ -36,3 +36,4 @@ lit-ocp_platform-*.tar.gz
 # Editor metadata
 .idea/
 .vscode/
+collections/

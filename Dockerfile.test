@@ -23,6 +23,7 @@ RUN python -m pip install --upgrade pip \
         ansible-lint==24.6.0 \
         molecule==25.9.0 \
         molecule-plugins[docker]==25.8.12 \
+        docker \
         yamllint==1.35.1 \
         pre-commit==3.7.1
 

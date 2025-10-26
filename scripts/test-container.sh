@@ -16,7 +16,8 @@ DOCKER_BUILDKIT=1 docker run --rm \
     cd /workspace
     mkdir -p /tmp/ansible_collections/lit
     ln -sfn /workspace /tmp/ansible_collections/lit/rhel_system
-    export ANSIBLE_COLLECTIONS_PATHS="/tmp/ansible_collections:/workspace/collections:/usr/share/ansible/collections"
+    export ANSIBLE_COLLECTIONS_PATH="/tmp/ansible_collections:/workspace/collections:/root/.ansible/collections:/usr/share/ansible/collections"
+    unset ANSIBLE_COLLECTIONS_PATHS
     if [ -d .git ]; then
       pre-commit run --all-files
     else

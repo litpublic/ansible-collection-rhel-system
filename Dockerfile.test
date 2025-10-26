@@ -26,9 +26,10 @@ RUN python -m pip install --upgrade pip \
         yamllint==1.35.1 \
         pre-commit==3.7.1
 
-RUN ansible-galaxy collection install \
+RUN ansible-galaxy collection install -p /usr/share/ansible/collections \
         community.general \
-        ansible.posix
+        ansible.posix \
+        community.docker
 
 ENV ANSIBLE_COLLECTIONS_PATHS="/workspace/collections:/usr/share/ansible/collections"
 

@@ -1,0 +1,5 @@
+---
+- name: Verify
+  hosts: localhost
+  gather_facts: false
+  tasks: []

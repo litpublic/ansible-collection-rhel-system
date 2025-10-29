@@ -61,7 +61,6 @@ for dir in \
   scripts \
   .agent \
   docker \
-  molecule \
   meta; do
   copy_path "$TMP_DIR/collections/common/$dir" "$PROJECT_DIR/$dir"
 done

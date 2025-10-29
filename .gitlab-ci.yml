@@ -1,3 +1,5 @@
 ---
 # Shared assets for collections are handled via the rollout pipeline.
-# This template intentionally defines no CI jobs.
+# Downstream repositories include this file to keep the structure consistent.
+# No jobs are defined here; pipelines remain empty.
+stages: []

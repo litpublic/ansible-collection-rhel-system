@@ -1,5 +1,0 @@
----
-include:
-  - project: 'lit4/modulix/platform/software-development-ecosystem/automation-tools/shared-assets'
-    file: collections/common/.gitlab-ci.yml
-    ref: main

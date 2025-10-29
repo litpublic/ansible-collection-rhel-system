@@ -177,7 +177,9 @@ build_collection:
     - |
       if [ -x scripts/sync_shared_assets.sh ]; then
         if ! command -v git >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
-          apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          rm -rf /var/lib/apt/lists/*
         fi
         ./scripts/sync_shared_assets.sh
       fi
@@ -219,7 +221,9 @@ publish_galaxy:
     - |
       if [ -x scripts/sync_shared_assets.sh ]; then
         if ! command -v git >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
-          apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          rm -rf /var/lib/apt/lists/*
         fi
         ./scripts/sync_shared_assets.sh
       fi
@@ -305,7 +309,9 @@ mirror_github:
     - test -n "$GITHUB_TOKEN"
     - test -n "${MIRROR_GITHUB_ORG:?MIRROR_GITHUB_ORG must be set}"
     - test -n "${MIRROR_GITHUB_REPO:?MIRROR_GITHUB_REPO must be set}"
-    - GITHUB_MIRROR_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${MIRROR_GITHUB_ORG}/${MIRROR_GITHUB_REPO}.git"
+    - |
+      GITHUB_MIRROR_HOST="https://x-access-token:${GITHUB_TOKEN}@github.com"
+      GITHUB_MIRROR_URL="${GITHUB_MIRROR_HOST}/${MIRROR_GITHUB_ORG}/${MIRROR_GITHUB_REPO}.git"
     - git fetch --unshallow || true
     - git fetch --all --tags
     - git remote remove "$MIRROR_REMOTE_NAME" >/dev/null 2>&1 || true

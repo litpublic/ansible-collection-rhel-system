@@ -1,14 +1,5 @@
 ---
-# Shared assets for collections are handled via the rollout pipeline.
-# Downstream repositories include this template to keep CI structure consistent.
-# A minimal placeholder job keeps GitLab satisfied while doing no real work.
-
-stages:
-  - placeholder
-
-shared_assets_placeholder:
-  stage: placeholder
-  script:
-    - echo "Shared assets managed centrally; no repository-specific CI jobs."
-  rules:
-    - when: always
+include:
+  - project: 'lit4/modulix/platform/software-development-ecosystem/automation-tools/shared-assets'
+    file: collections/common/.gitlab-ci.yml
+    ref: main

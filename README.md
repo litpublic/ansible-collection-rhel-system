@@ -14,6 +14,20 @@ service should not be managed directly (e.g., Molecule docker driver).
 
 Community note: contributors and users are expected to follow the [Ansible Community Code of Conduct](CODE_OF_CONDUCT.md).
 
+## Syncing shared assets
+
+Need the shared scripts locally before CI runs? Fetch them with:
+
+```bash
+curl -fsSL https://gitlab.com/lit4/modulix/platform/software-development-ecosystem/automation-tools/shared-assets/-/raw/main/collections/common/scripts/sync_shared_assets.sh | bash
+```
+
+## Shared assets
+
+This repository keeps only the collection-specific code. CI synchronises all common files
+(CI config, lint/test scripts, Molecule scaffolding, etc.) from the `shared-assets` project.
+Run the command above if you need them locally ahead of the CI sync job.
+
 ## CI/CD
 
 - Pre-commit (`.pre-commit-config.yaml`) runs `ansible-lint` and `yamllint` locally. Install with `pip install pre-commit && pre-commit install`.

@@ -1,5 +1,0 @@
----
-- name: Side Effect
-  hosts: localhost
-  gather_facts: false
-  tasks: []

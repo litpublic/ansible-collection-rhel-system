@@ -1,3 +1,4 @@
 ---
+# Molecule docker driver runtime dependencies.
 collections:
   - name: community.docker

@@ -1,0 +1,6 @@
+# Exclude everything by default to keep the context small.
+**
+
+# Allow the Dockerfile itself.
+!Dockerfile
+!ansible-galaxy-requirements.yml

@@ -1,0 +1,326 @@
+---
+stages:
+  - lint
+  - container
+  - test
+  - release
+  - version
+  - build
+  - publish
+  - mirror
+
+default:
+  cache:
+    key: ${CI_PROJECT_NAME}-pip
+    paths:
+      - .cache/pip
+
+variables:
+  PIP_CACHE_DIR: ".cache/pip"
+  PY_COLORS: "1"
+  ANSIBLE_FORCE_COLOR: "1"
+  MOLECULE_IMAGE_TAG: "$CI_REGISTRY_IMAGE/molecule:${CI_COMMIT_SHA}"
+  ANSIBLE_CORE_VERSION: "2.16.9"
+  ANSIBLE_LINT_VERSION: "24.6.0"
+  YAMLLINT_VERSION: "1.35.1"
+  PYTHON_IMAGE: "python:3.11"
+  DOCKER_CLI_IMAGE: "docker:27"
+  DOCKER_DIND_IMAGE: "docker:27-dind"
+  RELEASE_IMAGE: "${REGISTRY_FQDN}/${REGISTRY_GROUP}/gitlab-runner-ubi-9-node-release:latest"
+  MIRROR_REMOTE_NAME: "github"
+
+
+.before_ansible_env:
+  before_script:
+    - test -n "${COLLECTION_NAMESPACE:?COLLECTION_NAMESPACE must be set}"
+    - test -n "${COLLECTION_NAME:?COLLECTION_NAME must be set}"
+    - chmod go-w "$CI_PROJECT_DIR"
+    - COLLECTION_TMP_DIR="/tmp/ansible_collections/ansible_collections/${COLLECTION_NAMESPACE}"
+    - mkdir -p "$COLLECTION_TMP_DIR"
+    - ln -sfn "$CI_PROJECT_DIR" "$COLLECTION_TMP_DIR/${COLLECTION_NAME}"
+    - export ANSIBLE_CONFIG="$CI_PROJECT_DIR/ansible.cfg"
+    - export ANSIBLE_COLLECTIONS_PATH="/tmp/ansible_collections:${CI_PROJECT_DIR}/../..:${CI_PROJECT_DIR}/collections"
+    - export ANSIBLE_COLLECTIONS_PATH="$ANSIBLE_COLLECTIONS_PATH:/usr/share/ansible/collections"
+    - export ANSIBLE_ROLES_PATH="$CI_PROJECT_DIR/roles:/usr/share/ansible/roles:/etc/ansible/roles"
+.rules_all_refs:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH'
+
+lint:
+  stage: lint
+  extends:
+    - .rules_all_refs
+    - .before_ansible_env
+  image: "$PYTHON_IMAGE"
+  before_script:
+    - python -m pip install --upgrade pip
+    - >
+      pip install
+      "ansible-core==${ANSIBLE_CORE_VERSION}"
+      "ansible-lint==${ANSIBLE_LINT_VERSION}"
+      "yamllint==${YAMLLINT_VERSION}"
+  script:
+    - ansible-lint
+    - yamllint -c .yamllint.yaml .
+
+molecule_image:
+  stage: container
+  extends:
+    - .rules_all_refs
+  image: "$DOCKER_CLI_IMAGE"
+  services:
+    - name: "$DOCKER_DIND_IMAGE"
+      command: ["--mtu=1460"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker build --pull -t "$MOLECULE_IMAGE_TAG" -f docker/molecule/Dockerfile docker/molecule
+    - docker push "$MOLECULE_IMAGE_TAG"
+
+molecule:
+  stage: test
+  extends:
+    - .rules_all_refs
+    - .before_ansible_env
+  image: "$MOLECULE_IMAGE_TAG"
+  needs:
+    - job: molecule_image
+      artifacts: false
+  services:
+    - name: "$DOCKER_DIND_IMAGE"
+      command: ["--mtu=1460"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - molecule test --all
+
+semantic_release:
+  stage: release
+  image: "$RELEASE_IMAGE"
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - git status
+    - npx semantic-release
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+semantic_version_check:
+  stage: version
+  image: "$PYTHON_IMAGE"
+  script:
+    - python -m pip install --upgrade pip
+    - pip install pyyaml
+    - |
+      python <<'PY'
+      import os
+      import re
+      import sys
+      from pathlib import Path
+      import yaml
+
+      tag = os.environ.get("CI_COMMIT_TAG", "")
+      if not tag:
+          print("No tag present; skipping version verification.")
+          sys.exit(0)
+
+      if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+          print(f"Tag {tag!r} is not SemVer (vX.Y.Z).")
+          sys.exit(1)
+
+      with open("galaxy.yml", "r", encoding="utf-8") as fh:
+          data = yaml.safe_load(fh)
+
+      version = str(data.get("version", "")).strip()
+      if not version:
+          print("No version found in galaxy.yml")
+          sys.exit(1)
+
+      expected_tag = f"v{version}"
+      if tag != expected_tag:
+          print(f"Tag {tag} does not match galaxy.yml version {version}. Expected {expected_tag}.")
+          sys.exit(1)
+
+      version_file = Path("VERSION")
+      if not version_file.exists():
+          print("VERSION file missing")
+          sys.exit(1)
+
+      file_version = version_file.read_text(encoding="utf-8").strip()
+      if file_version != version:
+          print(f"VERSION file contains {file_version!r}, expected {version!r}.")
+          sys.exit(1)
+
+      print(f"Tag {tag} matches galaxy.yml version {version} and VERSION file.")
+      PY
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+build_collection:
+  stage: build
+  image: "$PYTHON_IMAGE"
+  extends:
+    - .before_ansible_env
+  needs:
+    - lint
+    - semantic_version_check
+  script:
+    - python -m pip install --upgrade pip
+    - pip install "ansible-core==${ANSIBLE_CORE_VERSION}"
+    - |
+      if [ -x scripts/sync_shared_assets.sh ]; then
+        if ! command -v git >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          rm -rf /var/lib/apt/lists/*
+        fi
+        ./scripts/sync_shared_assets.sh
+      fi
+    - |
+      CACHE_BACKUP="$(mktemp -d)"
+      if [ -d .cache ]; then mv .cache "$CACHE_BACKUP/.cache"; fi
+      if [ -d pip-wheel-metadata ]; then mv pip-wheel-metadata "$CACHE_BACKUP/pip-wheel-metadata"; fi
+      echo "Cache backup stored at $CACHE_BACKUP"
+    - |
+      TMP_BUILD_DIR="$(mktemp -d)"
+      rm -rf dist
+      ansible-galaxy collection build --force --output-path "$TMP_BUILD_DIR"
+      mkdir -p dist
+      mv "$TMP_BUILD_DIR"/"${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-"*.tar.gz dist/
+      rm -rf "$TMP_BUILD_DIR"
+    - |
+      rm -rf .cache pip-wheel-metadata
+      if [ -d "$CACHE_BACKUP/.cache" ]; then mv "$CACHE_BACKUP/.cache" .cache; fi
+      if [ -d "$CACHE_BACKUP/pip-wheel-metadata" ]; then mv "$CACHE_BACKUP/pip-wheel-metadata" pip-wheel-metadata; fi
+      rm -rf "$CACHE_BACKUP"
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - when: never
+
+publish_galaxy:
+  stage: publish
+  image: "$PYTHON_IMAGE"
+  extends:
+    - .before_ansible_env
+  needs:
+    - build_collection
+  script:
+    - python -m pip install --upgrade pip
+    - pip install "ansible-core==${ANSIBLE_CORE_VERSION}"
+    - |
+      if [ -x scripts/sync_shared_assets.sh ]; then
+        if ! command -v git >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+          rm -rf /var/lib/apt/lists/*
+        fi
+        ./scripts/sync_shared_assets.sh
+      fi
+    - test -n "$GALAXY_TOKEN"
+    - ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-*.tar.gz"
+    - ARTIFACT_FILE=$(printf '%s\n' dist/${ARTIFACT_GLOB})
+    - export ARTIFACT_FILE
+    - >
+      if [ "$ARTIFACT_FILE" = "dist/${ARTIFACT_GLOB}" ]; then
+        echo "Expected artifact matching dist/${ARTIFACT_GLOB} not found" >&2
+        exit 1
+      fi
+    - ls -alh dist
+    - du -h dist "$ARTIFACT_FILE" || true
+    - mkdir -p publish_galaxy_debug
+    - tar -tzf "$ARTIFACT_FILE" | head -n 200 > publish_galaxy_debug/archive_listing_head.txt
+    - |
+      python <<'PY'
+      import os
+      import tarfile
+      from pathlib import Path
+
+      artifact = Path(os.environ["ARTIFACT_FILE"])
+      debug_dir = Path("publish_galaxy_debug")
+      debug_dir.mkdir(parents=True, exist_ok=True)
+      report = debug_dir / "top_entries.csv"
+
+      with tarfile.open(artifact, "r:gz") as tf, report.open("w", encoding="utf-8") as fh:
+          fh.write("path,size_bytes\n")
+          members = sorted(tf.getmembers(), key=lambda m: m.size, reverse=True)
+          for member in members[:200]:
+              fh.write(f"{member.name},{member.size}\n")
+      PY
+    - ansible-galaxy collection publish "$ARTIFACT_FILE" --token "$GALAXY_TOKEN"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - when: never
+  environment:
+    name: production
+  artifacts:
+    when: always
+    paths:
+      - publish_galaxy_debug/
+      - dist/*.tar.gz
+
+publish_automation_hub:
+  stage: publish
+  image: curlimages/curl:8.10.1
+  needs:
+    - build_collection
+  script:
+    - |
+      ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-*.tar.gz"
+      set -euo pipefail
+      TGZ="$(printf '%s\n' dist/${ARTIFACT_GLOB})"
+      if [ "$TGZ" = "dist/${ARTIFACT_GLOB}" ]; then
+        echo "Expected artifact matching dist/${ARTIFACT_GLOB} not found" >&2
+        exit 1
+      fi
+      echo "Uploading $TGZ to Red Hat Partner Connect…"
+
+      if [ -z "${REDHAT_PARTNER_TOKEN:-}" ]; then
+        echo "REDHAT_PARTNER_TOKEN not set; skipping Automation Hub publish."
+        exit 0
+      fi
+
+      curl -sS -f -X POST \
+        -H "X-API-Key: $REDHAT_PARTNER_TOKEN" \
+        -F "file=@${TGZ}" \
+        https://connect.redhat.com/api/ansible/collection/upload
+
+      echo "Upload request submitted to Red Hat Partner Connect."
+      echo "Certification happens on Red Hat side. Monitor status in the Partner portal."
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+mirror_github:
+  stage: mirror
+  image:
+    name: alpine/git:2.45.2
+    entrypoint: [""]
+  script:
+    - test -n "$GITHUB_TOKEN"
+    - test -n "${MIRROR_GITHUB_ORG:?MIRROR_GITHUB_ORG must be set}"
+    - test -n "${MIRROR_GITHUB_REPO:?MIRROR_GITHUB_REPO must be set}"
+    - |
+      GITHUB_MIRROR_HOST="https://x-access-token:${GITHUB_TOKEN}@github.com"
+      GITHUB_MIRROR_URL="${GITHUB_MIRROR_HOST}/${MIRROR_GITHUB_ORG}/${MIRROR_GITHUB_REPO}.git"
+    - git fetch --unshallow || true
+    - git fetch --all --tags
+    - git remote remove "$MIRROR_REMOTE_NAME" >/dev/null 2>&1 || true
+    - git remote add "$MIRROR_REMOTE_NAME" "$GITHUB_MIRROR_URL"
+    - >
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        git push "$MIRROR_REMOTE_NAME" "refs/tags/${CI_COMMIT_TAG}:refs/tags/${CI_COMMIT_TAG}";
+      else
+        git push "$MIRROR_REMOTE_NAME" "HEAD:refs/heads/${CI_COMMIT_REF_NAME}";
+      fi
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

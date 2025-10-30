@@ -1,0 +1,7 @@
+---
+- name: Converge baseline
+  hosts: all
+  gather_facts: true
+  connection: local
+  roles:
+    - role: litpublic.rhel_system.baseline

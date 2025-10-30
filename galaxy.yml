@@ -1,0 +1,16 @@
+---
+namespace: litpublic
+name: rhel_system
+version: 0.1.0
+readme: README.md
+license:
+  - Apache-2.0
+description: "RHEL OS-level automation: baseline, hardening, podman setup, firewall."
+authors:
+  - Lightning IT <info@l-it.io>
+tags: [linux, rhel, hardening, podman, baseline, firewall]
+dependencies:
+  ansible.posix: ">=1.5.0"
+  community.general: ">=8.0.0"
+repository: https://gitlab.com/lightning-it/ansible-collection-rhel_system
+issues: https://gitlab.com/lightning-it/ansible-collection-rhel_system/-/issues

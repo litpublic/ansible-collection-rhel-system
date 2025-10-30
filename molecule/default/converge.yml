@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Apply baseline role
+      ansible.builtin.include_role:
+        name: litpublic.rhel_system.baseline
+
+    - name: Apply hardening role
+      ansible.builtin.include_role:
+        name: litpublic.rhel_system.hardening
+
+    - name: Apply podman role
+      ansible.builtin.include_role:
+        name: litpublic.rhel_system.podman
+
+    - name: Apply firewall role
+      ansible.builtin.include_role:
+        name: litpublic.rhel_system.firewall

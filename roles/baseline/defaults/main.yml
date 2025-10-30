@@ -1,0 +1,7 @@
+---
+packages_baseline:
+  - vim
+  - curl
+  - bash-completion
+  - util-linux-extra
+timezone: Etc/UTC

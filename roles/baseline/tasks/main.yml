@@ -1,0 +1,9 @@
+---
+- name: Ensure baseline packages are present
+  ansible.builtin.package:
+    name: "{{ packages_baseline }}"
+    state: present
+
+- name: Ensure timezone is set
+  community.general.timezone:
+    name: "{{ timezone }}"

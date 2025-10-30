@@ -1,0 +1,43 @@
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Python / Ansible artifacts
+__pycache__/
+*.py[cod]
+*.retry
+*.bak
+*.swp
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Version managers
+.python-version
+.tool-versions
+.node-version
+
+# pip / build caches
+.cache/
+pip-wheel-metadata/
+
+# Molecule state
+.molecule/
+molecule/*/.molecule/
+molecule/*/logs/
+molecule/*/instances.yml
+
+# Collection build output
+lit-foundation_services-*.tar.gz
+dist/
+publish_debug/
+.ansible/
+
+# Editor metadata
+.idea/
+.vscode/
+
+# Vendored Ansible content
+collections/

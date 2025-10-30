@@ -1,0 +1,29 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.6.0
+    hooks:
+      - id: ansible-lint
+        additional_dependencies:
+          - ansible-core==2.16.9
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        files: \.(yml|yaml)$
+
+  - repo: local
+    hooks:
+      - id: gitlab-ci-lint
+        name: GitLab CI Lint
+        entry: scripts/gitlab-ci-lint.sh
+        language: system
+        pass_filenames: false
+        stages: [commit, push]

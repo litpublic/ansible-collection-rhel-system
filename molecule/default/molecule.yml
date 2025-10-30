@@ -6,7 +6,7 @@ driver:
   name: docker
 
 platforms:
-  - name: foundation-instance
+  - name: rhel-system-instance
     image: python:3.12-slim
     pre_build_image: true
     privileged: true

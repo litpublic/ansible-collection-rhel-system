@@ -3,20 +3,18 @@
   hosts: all
   gather_facts: true
   tasks:
-    - name: Apply gitlab_runner
+    - name: Apply baseline role
       ansible.builtin.include_role:
-        name: litpublic.foundation_services.gitlab_runner
-      vars:
-        gitlab_runner_experimental_acknowledge: true
+        name: litpublic.rhel_system.baseline
 
-    - name: Apply nexus
+    - name: Apply hardening role
       ansible.builtin.include_role:
-        name: litpublic.foundation_services.nexus
-      vars:
-        nexus_experimental_acknowledge: true
+        name: litpublic.rhel_system.hardening
 
-    - name: Apply vault
+    - name: Apply podman role
       ansible.builtin.include_role:
-        name: litpublic.foundation_services.vault
-      vars:
-        vault_experimental_acknowledge: true
+        name: litpublic.rhel_system.podman
+
+    - name: Apply firewall role
+      ansible.builtin.include_role:
+        name: litpublic.rhel_system.firewall

@@ -12,6 +12,6 @@
     - name: Link project collection into staging path
       ansible.builtin.file:
         src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
-        dest: /tmp/ansible_collections/ansible_collections/litpublic/foundation_services
+        dest: /tmp/ansible_collections/ansible_collections/litpublic/rhel_system
         state: link
         force: true

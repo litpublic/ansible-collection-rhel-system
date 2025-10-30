@@ -18,3 +18,5 @@
     - name: Apply firewall role
       ansible.builtin.include_role:
         name: litpublic.rhel_system.firewall
+      vars:
+        firewalld_manage_service: false

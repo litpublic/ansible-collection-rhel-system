@@ -29,6 +29,7 @@ variables:
   RELEASE_IMAGE: "${REGISTRY_FQDN}/${REGISTRY_GROUP}/gitlab-runner-ubi-9-node-release:latest"
   MIRROR_REMOTE_NAME: "github"
 
+
 .before_ansible_env:
   before_script:
     - test -n "${COLLECTION_NAMESPACE:?COLLECTION_NAMESPACE must be set}"
@@ -191,7 +192,8 @@ build_collection:
       rm -rf dist
       ansible-galaxy collection build --force --output-path "$TMP_BUILD_DIR"
       mkdir -p dist
-      mv "$TMP_BUILD_DIR"/"${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-"*.tar.gz dist/
+      COLLECTION_CANON="$(printf '%s' "$COLLECTION_NAME" | tr '-' '_')"
+      mv "$TMP_BUILD_DIR"/"${COLLECTION_NAMESPACE}-${COLLECTION_CANON}-"*.tar.gz dist/
       rm -rf "$TMP_BUILD_DIR"
     - |
       rm -rf .cache pip-wheel-metadata
@@ -226,7 +228,8 @@ publish_galaxy:
         ./scripts/sync_shared_assets.sh
       fi
     - test -n "$GALAXY_TOKEN"
-    - ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-*.tar.gz"
+    - COLLECTION_CANON="$(printf '%s' "$COLLECTION_NAME" | tr '-' '_')"
+    - ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_CANON}-*.tar.gz"
     - ARTIFACT_FILE=$(printf '%s\n' dist/${ARTIFACT_GLOB})
     - export ARTIFACT_FILE
     - >
@@ -274,7 +277,8 @@ publish_automation_hub:
     - build_collection
   script:
     - |
-      ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_NAME}-*.tar.gz"
+      COLLECTION_CANON="$(printf '%s' "$COLLECTION_NAME" | tr '-' '_')"
+      ARTIFACT_GLOB="${COLLECTION_NAMESPACE}-${COLLECTION_CANON}-*.tar.gz"
       set -euo pipefail
       TGZ="$(printf '%s\n' dist/${ARTIFACT_GLOB})"
       if [ "$TGZ" = "dist/${ARTIFACT_GLOB}" ]; then

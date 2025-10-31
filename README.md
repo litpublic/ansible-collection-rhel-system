@@ -56,4 +56,3 @@ git push origin main
 ```
 
 Once merged to `main`, semantic-release publishes the next `vX.Y.Z` tag automatically; the tag pipeline then builds and publishes the collection artifacts.
-

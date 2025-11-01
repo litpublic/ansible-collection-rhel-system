@@ -1,3 +1,10 @@
+## [0.1.2](https://gitlab.com/lit4/modulix/platform/software-development-ecosystem/automation-tools/ansible/collections/rhel_system/compare/v0.1.1...v0.1.2) (2025-11-01)
+
+
+### Bug Fixes
+
+* new release ([2598d7f](https://gitlab.com/lit4/modulix/platform/software-development-ecosystem/automation-tools/ansible/collections/rhel_system/commit/2598d7f6d9343880cb06147fc1f347110b149ab0))
+
 ## [0.1.1](https://gitlab.com/lit4/modulix/platform/software-development-ecosystem/automation-tools/ansible/collections/rhel_system/compare/v0.1.0...v0.1.1) (2025-10-31)
 
 

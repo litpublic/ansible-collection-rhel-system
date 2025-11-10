@@ -1,4 +1,4 @@
-# litpublic.rhel_system (v0.1.2)
+# lit.rhel_system (v0.1.2)
 
 Prefix-free role names:
 

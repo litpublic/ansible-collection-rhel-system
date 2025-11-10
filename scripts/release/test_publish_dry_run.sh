@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \
 ./scripts/galaxy_publish.sh build >/dev/null
@@ -13,7 +13,7 @@ PYTHON_BIN="${PYTHON_BIN:-python3}" \
 LOG_FILE="$(mktemp)"
 trap 'rm -f "$LOG_FILE"' EXIT
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 GALAXY_SERVER="https://galaxy.ansible.com" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \

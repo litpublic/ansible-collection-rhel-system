@@ -7,7 +7,7 @@ Installs a minimal set of operational packages and configures the system timezon
 ```yaml
 - hosts: all
   roles:
-    - role: litpublic.rhel_system.baseline
+    - role: lit.rhel_system.baseline
       vars:
         packages_baseline:
           - vim

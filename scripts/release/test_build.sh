@@ -13,7 +13,7 @@ cd "$TMP_CLONE"
 
 make sync-shared >/dev/null
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \
 ./scripts/galaxy_publish.sh build >/dev/null

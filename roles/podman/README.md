@@ -7,7 +7,7 @@ Installs Podman tooling and prepares the container configuration directory.
 ```yaml
 - hosts: all
   roles:
-    - role: litpublic.rhel_system.podman
+    - role: lit.rhel_system.podman
       vars:
         packages:
           - podman

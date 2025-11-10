@@ -7,7 +7,7 @@ cd "$PROJECT_ROOT"
 
 make sync-shared >/dev/null
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \
 ./scripts/galaxy_publish.sh build >/dev/null
@@ -15,7 +15,7 @@ PYTHON_BIN="${PYTHON_BIN:-python3}" \
 LOG_FILE="$(mktemp)"
 trap 'rm -f "$LOG_FILE"' EXIT
 
-if COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+if COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
    COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
    GALAXY_TOKEN="" \
    PYTHON_BIN="${PYTHON_BIN:-python3}" \

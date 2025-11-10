@@ -7,7 +7,7 @@ Applies opinionated SSH hardening defaults and restarts the daemon when required
 ```yaml
 - hosts: all
   roles:
-    - role: litpublic.rhel_system.hardening
+    - role: lit.rhel_system.hardening
       vars:
         sshd_hardening:
           PermitRootLogin: "no"

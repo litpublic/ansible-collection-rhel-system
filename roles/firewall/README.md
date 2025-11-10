@@ -7,7 +7,7 @@ Installs and manages `firewalld`, optionally enabling selected services or ports
 ```yaml
 - hosts: all
   roles:
-    - role: litpublic.rhel_system.firewall
+    - role: lit.rhel_system.firewall
       vars:
         firewalld_manage_service: true
         services_enable:

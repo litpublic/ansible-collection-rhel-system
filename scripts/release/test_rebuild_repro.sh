@@ -13,7 +13,7 @@ cd "$TMP_CLONE"
 
 export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$(git -C "$PROJECT_ROOT" log -1 --pretty=%ct 2>/dev/null || date +%s)}
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \
 ./scripts/galaxy_publish.sh build >/dev/null
@@ -22,7 +22,7 @@ sha_one=$(sha256sum dist/*.tar.gz | awk '{print $1}')
 
 rm -rf dist publish_debug
 
-COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-litpublic}" \
+COLLECTION_NAMESPACE="${COLLECTION_NAMESPACE:-lit}" \
 COLLECTION_NAME="${COLLECTION_NAME:-foundation_services}" \
 PYTHON_BIN="${PYTHON_BIN:-python3}" \
 ./scripts/galaxy_publish.sh build >/dev/null

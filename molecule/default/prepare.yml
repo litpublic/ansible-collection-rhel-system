@@ -5,13 +5,13 @@
   tasks:
     - name: Ensure collection staging path exists
       ansible.builtin.file:
-        path: /tmp/ansible_collections/ansible_collections/litpublic
+        path: /tmp/ansible_collections/ansible_collections/lit
         state: directory
         mode: "0755"
 
     - name: Link project collection into staging path
       ansible.builtin.file:
         src: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
-        dest: /tmp/ansible_collections/ansible_collections/litpublic/rhel_system
+        dest: /tmp/ansible_collections/ansible_collections/lit/rhel_system
         state: link
         force: true
